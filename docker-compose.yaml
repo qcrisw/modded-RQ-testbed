@@ -1,0 +1,18 @@
+version: '3.5'
+services:
+  redis:
+    image: redis:latest
+  producer:
+    build:
+      context: .
+      dockerfile: ./rq-standalone-example/producer/Dockerfile
+    environment: 
+      - REDIS_URL=redis://redis:6379/0
+      - OUT_QUEUE=default
+  consumer:
+    build:
+      context: .
+      dockerfile: ./rq-standalone-example/consumer/Dockerfile
+    environment: 
+      - REDIS_URL=redis://redis:6379/0
+      - IN_QUEUE=default
