@@ -9,6 +9,8 @@ services:
     environment: 
       - REDIS_URL=redis://redis:6379/0
       - OUT_QUEUE=default
+    depends_on: 
+      - redis
   consumer:
     build:
       context: .
@@ -16,3 +18,15 @@ services:
     environment: 
       - REDIS_URL=redis://redis:6379/0
       - IN_QUEUE=default
+  independent_producer_node:
+    build:
+      context: ./independent_producer_node
+      dockerfile: ./Dockerfile
+    depends_on:
+      - redis
+  independent_producer_python:
+    build:
+      context: ./independent_producer_python
+      dockerfile: ./Dockerfile
+    depends_on: 
+      - redis
