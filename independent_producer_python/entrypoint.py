@@ -22,8 +22,7 @@ class IndependentQueue():
     
     # create RQ job to push to redis
     def create_job(self, func_name, arg, timeout=180, result_ttl=500, 
-                    ttl=420, description=None, depends_on=None,
-                    job_id=None, at_front=False, meta=None, raw=False):
+                    ttl=420, description=None, at_front=False ):
         assert type(arg) == bytes
         mapping = {}
         mapping['created_at'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -32,22 +31,24 @@ class IndependentQueue():
         mapping['origin'] = self.queueName
         mapping['description'] = description if description is not None else func_name
         mapping['timeout'] = timeout
-        mapping['raw'] = str(raw)
 
         job_name = str(uuid4())
         return (job_name, mapping)
 
-    def enqueue(self, func_name, arg, timeout=180, 
-                    result_ttl=500, ttl=420, description=None, depends_on=None,
-                    job_id=None, at_front=False, meta=None, raw=False):
+    def enqueue(self, func_name, arg, timeout=180, result_ttl=500, ttl=420, 
+                    description=None, at_front=False ):
         # create job from data provided
-        job_name, job = self.create_job(func_name, arg, timeout, result_ttl, ttl, 
-                        description, depends_on, job_id, at_front, meta, raw)
+        job_name, job = self.create_job(func_name, arg, timeout=timeout, 
+                                        result_ttl=result_ttl, ttl=ttl, 
+                                        description=description,
+                                        at_front=at_front)
         # enqueue job to queue
         self.redisClient.hmset(self.RQ_JOB_PREFIX+str(job_name), job)
         if at_front:
+            # logger.info(f"inserting at front of queue: {job['arg']}")
             self.redisClient.lpush(self.RQ_QUEUE_PREFIX+str(self.queueName), job_name)
-        self.redisClient.lpush(self.RQ_QUEUE_PREFIX+str(self.queueName), job_name)
+        else:
+            self.redisClient.rpush(self.RQ_QUEUE_PREFIX+str(self.queueName), job_name)
 
 
 if __name__=="__main__":
@@ -61,4 +62,9 @@ if __name__=="__main__":
     redisClient = StrictRedis(host=host, port=port, db=db)
 
     queue = IndependentQueue(redisClient=redisClient)
+    queue.enqueue('consumer1.consume.consume_func',  b'{"a": "a"}')
     queue.enqueue('consumer1.consume.consume_func',  b'{"a": "b"}')
+    queue.enqueue('consumer1.consume.consume_func',  b'{"a": "c"}')
+    queue.enqueue('consumer1.consume.consume_func',  b'{"a": "d"}')
+    queue.enqueue('consumer1.consume.consume_func',  b'{"a": "e"}', at_front=True)
+    queue.enqueue('consumer1.consume.consume_func',  b'{"a": "f"}')
