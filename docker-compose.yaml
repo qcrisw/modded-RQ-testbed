@@ -6,16 +6,16 @@ services:
     build:
       context: .
       dockerfile: ./rq-standalone-example/producer/Dockerfile
-    environment: 
+    environment:
       - REDIS_URL=redis://redis:6379/0
       - OUT_QUEUE=default
-    depends_on: 
+    depends_on:
       - redis
   consumer:
     build:
       context: .
       dockerfile: ./rq-standalone-example/consumer/Dockerfile
-    environment: 
+    environment:
       - REDIS_URL=redis://redis:6379/0
       - IN_QUEUE=default
   independent_producer_node:
@@ -28,5 +28,5 @@ services:
     build:
       context: ./independent_producer_python
       dockerfile: ./Dockerfile
-    depends_on: 
+    depends_on:
       - redis
