@@ -1,6 +1,8 @@
 [submodule "rq"]
 	path = rq
 	url = git@github.com:qcrisw/rq.git
+  branch = raw_rq
 [submodule "rq-standalone-example"]
 	path = rq-standalone-example
 	url = git@github.com:qcrisw/rq-standalone-example.git
+  branch = modded-rq-testbed
