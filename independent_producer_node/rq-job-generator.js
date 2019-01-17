@@ -33,7 +33,9 @@ module.exports = function _rqJobGenerator(redisClient, queueName, callback) {
 
     // create RQ job to push to redis
     const createJobMapping = function _createJobMapping(funcName, arg, options) {
-      // TODO assert type(arg) == bytes
+      if (typeof arg != 'string') {
+        throw("arg must be of type string")
+      }
       return {
         created_at: new Date().toISOString(),
         func_name: funcName,
@@ -43,7 +45,7 @@ module.exports = function _rqJobGenerator(redisClient, queueName, callback) {
         result_ttl: options.result_ttl,
         ttl: options.ttl,
         description: options.description,
-        raw: 'yes' // TODO is this a string?
+        raw: 'yes'
       }
     }
 
