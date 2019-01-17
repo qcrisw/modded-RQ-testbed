@@ -19,9 +19,9 @@ class IndependentQueue():
             raise ValueError("No redis client provided")
         self.redisClient = redisClient
         self.redisClient.sadd("rq:queues", self.RQ_QUEUE_PREFIX+str(queueName))
-    
+
     # create RQ job to push to redis
-    def create_job(self, func_name, arg, timeout=180, result_ttl=500, 
+    def create_job(self, func_name, arg, timeout=180, result_ttl=500,
                     ttl=420, description=None, at_front=False ):
         assert type(arg) == bytes
         mapping = {}
@@ -35,20 +35,20 @@ class IndependentQueue():
         job_name = str(uuid4())
         return (job_name, mapping)
 
-    def enqueue(self, func_name, arg, timeout=180, result_ttl=500, ttl=420, 
+    def enqueue(self, func_name, arg, timeout=180, result_ttl=500, ttl=420,
                     description=None, at_front=False ):
         # create job from data provided
-        job_name, job = self.create_job(func_name, arg, timeout=timeout, 
-                                        result_ttl=result_ttl, ttl=ttl, 
+        job_name, job = self.create_job(func_name, arg, timeout=timeout,
+                                        result_ttl=result_ttl, ttl=ttl,
                                         description=description,
                                         at_front=at_front)
         # enqueue job to queue
         self.redisClient.hmset(self.RQ_JOB_PREFIX+str(job_name), job)
         if at_front:
-            # logger.info(f"inserting at front of queue: {job['arg']}")
             self.redisClient.lpush(self.RQ_QUEUE_PREFIX+str(self.queueName), job_name)
         else:
             self.redisClient.rpush(self.RQ_QUEUE_PREFIX+str(self.queueName), job_name)
+        logger.info(f"enqueued: {job['arg']}")
 
 
 if __name__=="__main__":
