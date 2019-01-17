@@ -31,6 +31,7 @@ class IndependentQueue():
         mapping['origin'] = self.queueName
         mapping['description'] = description if description is not None else func_name
         mapping['timeout'] = timeout
+        mapping['raw'] = str(True)
 
         job_name = str(uuid4())
         return (job_name, mapping)
