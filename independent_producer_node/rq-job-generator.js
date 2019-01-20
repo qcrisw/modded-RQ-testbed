@@ -16,23 +16,26 @@ module.exports = function _rqJobGenerator(redisClient, queueName, callback) {
       if (!redisClient) {
         throw("No redis client provided")
       }
-      redisClient.sadd("rq:queues", RQ_QUEUE_NAME, function _sadd(err, res) {
+      redisClient.sadd("rq:queues", RQ_QUEUE_NAME, function _sadd(err) {
         if (!err) {
-          console.log("Created queue with name: %s, raw response: %o", queueName, res)
-          if (typeof callback === 'function') {
-            callback()
-          }
+          console.log("Created queue with name", queueName)
         }
         else {
-          console.error("Error creating queue with name: %s", queueName)
+          console.error("Error creating queue with name: %s, [Error: %s]", queueName, err.message)
         }
-      })
+        if (typeof callback === 'function') {
+          callback(err)
+        }
+    })
     }
 
     createQueue(queueName, callback)
 
     // create RQ job to push to redis
     const createJobMapping = function _createJobMapping(funcName, arg, options) {
+      if (typeof funcName != 'string') {
+        throw("funcName must be of type string")
+      }
       if (typeof arg != 'string') {
         throw("arg must be of type string")
       }
@@ -68,17 +71,17 @@ module.exports = function _rqJobGenerator(redisClient, queueName, callback) {
         false: 'rpush'
       }[_options.at_front]
       multi[pushMethod](RQ_QUEUE_NAME, job_name)
-      .exec(function (err, replies) {
+      .exec(function (err) {
         if (!err) {
           console.log("Enqueued job: %s(%s) with options: %o", funcName, arg, _options)
-          if (typeof callback === 'function') {
-            callback()
-          }
         }
         else {
-          console.error("Error enqueuing job: %s(%s) with options: %o", funcName, arg, _options)
+          console.error("Error enqueuing job: %s(%s) with options: %o [Error: %s]", funcName, arg, _options, err.message)
         }
-      })
+        if (typeof callback === 'function') {
+          callback(err)
+        }
+    })
     }
   }
 }
