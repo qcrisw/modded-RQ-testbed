@@ -28,6 +28,9 @@ class IndependentQueue():
         mapping['created_at'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S.%fZ')
         mapping['func_name'] = func_name
         mapping['arg'] = arg
+        mapping['timeout'] = timeout
+        mapping["result_ttl"] = result_ttl
+        mapping["ttl"] = ttl
         mapping['origin'] = self.queueName
         mapping['description'] = description if description is not None else func_name
         mapping['timeout'] = timeout
