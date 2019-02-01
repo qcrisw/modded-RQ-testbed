@@ -1,6 +1,6 @@
 const uuidv4 = require('uuid/v4')
 
-module.exports = function _rqJobGenerator(redisClient, queueName) {
+module.exports = function _rqJobGenerator(redisClient, queueName, callback) {
   return new function () {
     const me = this
 
@@ -11,34 +11,48 @@ module.exports = function _rqJobGenerator(redisClient, queueName) {
     const RQ_QUEUE_NAME = `rq:queue:${queueName}`
     const RQ_JOB_PREFIX = "rq:job:"
 
-    const createQueue = function _createQueue(queueName) {
+    const createQueue = function _createQueue(queueName, callback) {
       // initialize queue
       if (!redisClient) {
         throw("No redis client provided")
       }
-      redisClient.sadd("rq:queues", RQ_QUEUE_NAME)
-      console.log("Created queue with name: %s", queueName)
-      // TODO callback
+      redisClient.sadd("rq:queues", RQ_QUEUE_NAME, function _sadd(err) {
+        if (!err) {
+          console.log("Created queue with name", queueName)
+        }
+        else {
+          console.error("Error creating queue with name: %s, [Error: %s]", queueName, err.message)
+        }
+        if (typeof callback === 'function') {
+          callback(err)
+        }
+    })
     }
 
-    createQueue(queueName)
+    createQueue(queueName, callback)
 
     // create RQ job to push to redis
     const createJobMapping = function _createJobMapping(funcName, arg, options) {
-      // TODO assert type(arg) == bytes
+      if (typeof funcName != 'string') {
+        throw("funcName must be of type string")
+      }
+      if (typeof arg != 'string') {
+        throw("arg must be of type string")
+      }
       return {
         created_at: new Date().toISOString(),
         func_name: funcName,
         arg: arg,
         origin: queueName,
-        description: options.description,
         timeout: options.timeout,
-        raw: 'True' // TODO is this a string?
+        result_ttl: options.result_ttl,
+        ttl: options.ttl,
+        description: options.description,
+        raw: 'yes'
       }
-      // TODO where are the rest of options consumed?
     }
 
-    this.enqueue = function _enqueue(funcName, arg, options) {
+    this.enqueue = function _enqueue(funcName, arg, options, callback) {
       const _options = Object.assign({
         timeout: 180,
         result_ttl: 500,
@@ -51,15 +65,23 @@ module.exports = function _rqJobGenerator(redisClient, queueName) {
             mapping = createJobMapping(funcName, arg, _options)
 
       // enqueue job to queue
-      redisClient.hmset(`${RQ_JOB_PREFIX}${job_name}`, mapping)
-      if (_options.at_front)
-          redisClient.lpush(RQ_QUEUE_NAME, job_name)
-      else
-          redisClient.rpush(RQ_QUEUE_NAME, job_name)
-
-      // TODO callbacks
-
-      console.log("Enqueued job: %s(%s) with options: %o", funcName, arg, _options)
+      var multi = redisClient.multi().hmset(`${RQ_JOB_PREFIX}${job_name}`, mapping)
+      const pushMethod = {
+        true: 'lpush',
+        false: 'rpush'
+      }[_options.at_front]
+      multi[pushMethod](RQ_QUEUE_NAME, job_name)
+      .exec(function (err) {
+        if (!err) {
+          console.log("Enqueued job: %s(%s) with options: %o", funcName, arg, _options)
+        }
+        else {
+          console.error("Error enqueuing job: %s(%s) with options: %o [Error: %s]", funcName, arg, _options, err.message)
+        }
+        if (typeof callback === 'function') {
+          callback(err)
+        }
+    })
     }
   }
 }
