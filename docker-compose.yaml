@@ -35,3 +35,9 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - redis
+  tests:
+    build:
+      context: .
+      dockerfile: ./tests/Dockerfile
+    depends_on: 
+      - redis
