@@ -1,0 +1,3 @@
+hiredis
+mock
+pytest
