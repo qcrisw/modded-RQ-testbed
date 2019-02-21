@@ -41,3 +41,9 @@ services:
       dockerfile: ./tests/Dockerfile
     depends_on: 
       - redis
+  tests_pypy:
+    build:
+      context: .
+      dockerfile: ./tests/Dockerfile_pypy
+    depends_on: 
+      - redis
