@@ -34,3 +34,25 @@ docker-compose up
 ```
 docker-compose up tests tests_pypy
 ```
+Given that the RQ repo runs tests for python 2.6, 2.7, 3.3, 3.4, 3.5, 3.6, 3.7, pypy and flake8. Docker currently does not have images for 2.6 and 3.3. So in order to prevent unnecessary failures we modify the `tox.ini`  file accordingly. 
+
+For building the `tests` image:
+Replace the definition of envlist in `tox.ini` with the follwing:
+```
+envlist=py27,py34,py35,py36,py37,flake8
+```
+Then run the following:
+```
+docker-compose build tests
+```
+
+For building the `tests_pypy` image:
+Replace the definition of envlist in `tox.ini` with the follwing:
+```
+envlist=pypy
+```
+Then run the following:
+```
+docker-compose build tests_pypy
+```
+This will test everything except python 2.6 and 3.3. 
