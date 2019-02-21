@@ -29,3 +29,8 @@ cd this/repo
 docker-compose build
 docker-compose up
 ```
+
+## Running Tests
+```
+docker-compose up tests tests_pypy
+```
