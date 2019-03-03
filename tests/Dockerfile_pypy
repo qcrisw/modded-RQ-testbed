@@ -1,0 +1,13 @@
+FROM pypy:2 as pypy
+
+RUN apt-get update && apt-get install -y redis-tools \
+                                            redis-server 
+                                            # tox
+RUN pip install tox
+# ENV PATH="/usr/local/bin/python3.4:/usr/local/bin/python3.6:${PATH}"
+WORKDIR /home
+COPY /rq /home/rq/
+WORKDIR /home/rq
+
+COPY ./tests/entrypoint.sh .
+ENTRYPOINT [ "./entrypoint.sh" ]
