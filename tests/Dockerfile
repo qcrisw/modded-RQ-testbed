@@ -15,11 +15,9 @@ COPY --from=python3.6 /usr/local/include/python3.6m /usr/local/include/python3.6
 COPY --from=python3.6 /usr/local/lib/python3.6 /usr/local/lib/python3.6
 COPY --from=python3.6 /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
 
-RUN apt-get update && apt-get install -y redis-tools \
-                                            redis-server \
-                                            tox
+RUN apt-get update && apt-get install -y tox \
+                                            redis-server
 
-# RUN pip install tox
 
 WORKDIR /home
 COPY /rq /home/rq/
